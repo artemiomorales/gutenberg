@@ -189,6 +189,11 @@
 		position: absolute;
 	}
 
+	.wp-block-image img {
+		position: absolute;
+		transform-origin: top left;
+	}
+
 	button {
 		border: none;
 		background: none;
@@ -200,21 +205,25 @@
 		position: absolute;
 		z-index: 2000000;
 		background-color: rgb(255, 255, 255);
-		opacity: 0.9;
 	}
 
-	&.initialized {
-		animation: both turn-off-visibility 300ms;
-
-		img {
-			animation: both turn-off-visibility 250ms;
+	&.active {
+		opacity: 1;
+		visibility: visible;
+		.wp-block-image img {
+			animation: lightbox-zoom-in 0.4s forwards;
 		}
-
-		&.active {
-			animation: both turn-on-visibility 250ms;
-
-			img {
-				animation: both turn-on-visibility 300ms;
+		.scrim {
+			animation: turn-on-visibility 0.4s forwards;
+		}
+	}
+	&.initialized {
+		&:not(.active) {
+			.wp-block-image img {
+				animation: lightbox-zoom-out 0.4s forwards;
+			}
+			.scrim {
+				animation: turn-off-visibility 0.4s forwards;
 			}
 		}
 	}
@@ -230,14 +239,14 @@
 		visibility: visible;
 	}
 	100% {
-		opacity: 1;
+		opacity: 0.9;
 		visibility: visible;
 	}
 }
 
 @keyframes turn-off-visibility {
 	0% {
-		opacity: 1;
+		opacity: 0.9;
 		visibility: visible;
 	}
 	99% {

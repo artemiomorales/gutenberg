@@ -11,25 +11,91 @@ store( {
 	actions: {
 		core: {
 			image: {
-				showLightbox: ( { context } ) => {
+				showLightbox: ( { context, event } ) => {
 					context.core.image.initialized = true;
 					context.core.image.lightboxEnabled = true;
 					context.core.image.lastFocusedElement =
 						window.document.activeElement;
 					context.core.image.scrollPosition = window.scrollY;
+
+					const { x: leftPosition, y: topPosition } =
+						event.target.getBoundingClientRect();
+					const scaleWidth =
+						event.target.offsetWidth / event.target.naturalWidth;
+					const scaleHeight =
+						event.target.offsetHeight / event.target.naturalHeight;
+					const zoomInRule = `
+						@keyframes lightbox-zoom-in {
+							0% {
+								left: ${ leftPosition }px;
+								top: ${ topPosition }px;
+								transform: scale(${ scaleWidth }, ${ scaleHeight });
+							}
+							100% {
+								left: 50%;
+								top: 50%;
+								transform: translate(-50%, -50%) scale( 1, 1);
+							}
+						}
+					`;
+					const zoomOutRule = `
+						@keyframes lightbox-zoom-out {
+							0% {
+								visibility: visible;
+								left: 50%;
+								top: 50%;
+								transform: translate(-50%, -50%) scale( 1, 1);
+							}
+							99%{
+								visibility: visible;
+							}
+							100% {
+								visibility: hidden;
+								left: ${ leftPosition }px;
+								top: ${ topPosition }px;
+								transform: scale(${ scaleWidth }, ${ scaleHeight });
+							}
+						}
+					`;
+
+					const css = window.document.styleSheets[ 0 ];
+					// Delete previous animations before adding new ones.
+					let deletedItems = 0;
+					Object.keys( css.cssRules ).forEach( ( rule, index ) => {
+						const updatedIndex = index - deletedItems;
+						if (
+							css.cssRules[ updatedIndex ].name ===
+								'lightbox-zoom-in' ||
+							css.cssRules[ updatedIndex ].name ===
+								'lightbox-zoom-out'
+						) {
+							css.deleteRule( updatedIndex );
+							deletedItems++;
+						}
+					} );
+					css.insertRule( zoomInRule );
+					css.insertRule( zoomOutRule );
 				},
 				hideLightbox: ( { context, event } ) => {
 					if ( context.core.image.lightboxEnabled ) {
-						// If scrolling, wait a moment before closing the lightbox.
-						if (
-							event.type === 'mousewheel' &&
-							Math.abs(
-								window.scrollY -
-									context.core.image.scrollPosition
-							) < 5
-						) {
-							return;
-						}
+						// Disable scroll until the zoom animation ends.
+						// Get the current page scroll position
+						const scrollTop =
+							window.pageYOffset ||
+							document.documentElement.scrollTop;
+						const scrollLeft =
+							window.pageXOffset ||
+							document.documentElement.scrollLeft;
+						// if any scroll is attempted, set this to the previous value.
+						window.onscroll = function () {
+							window.scrollTo( scrollLeft, scrollTop );
+						};
+
+						// Enable scrolling after the animation finishes
+						setTimeout( function () {
+							window.onscroll = function () {};
+						}, 400 );
+
 						context.core.image.lightboxEnabled = false;
 
 						// We only want to focus the last focused element
