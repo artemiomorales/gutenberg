@@ -18,63 +18,30 @@ store( {
 						window.document.activeElement;
 					context.core.image.scrollPosition = window.scrollY;
 
+					// Change css variables depending on the image.
 					const { x: leftPosition, y: topPosition } =
 						event.target.getBoundingClientRect();
 					const scaleWidth =
 						event.target.offsetWidth / event.target.naturalWidth;
 					const scaleHeight =
 						event.target.offsetHeight / event.target.naturalHeight;
-					const zoomInRule = `
-						@keyframes lightbox-zoom-in {
-							0% {
-								left: ${ leftPosition }px;
-								top: ${ topPosition }px;
-								transform: scale(${ scaleWidth }, ${ scaleHeight });
-							}
-							100% {
-								left: 50%;
-								top: 50%;
-								transform: translate(-50%, -50%) scale( 1, 1);
-							}
-						}
-					`;
-					const zoomOutRule = `
-						@keyframes lightbox-zoom-out {
-							0% {
-								visibility: visible;
-								left: 50%;
-								top: 50%;
-								transform: translate(-50%, -50%) scale( 1, 1);
-							}
-							99%{
-								visibility: visible;
-							}
-							100% {
-								visibility: hidden;
-								left: ${ leftPosition }px;
-								top: ${ topPosition }px;
-								transform: scale(${ scaleWidth }, ${ scaleHeight });
-							}
-						}
-					`;
-
-					const css = window.document.styleSheets[ 0 ];
-					// Delete previous animations before adding new ones.
-					let deletedItems = 0;
-					Object.keys( css.cssRules ).forEach( ( rule, index ) => {
-						const updatedIndex = index - deletedItems;
-						if (
-							css.cssRules[ updatedIndex ].name ===
-								'lightbox-zoom-in' ||
-							css.cssRules[ updatedIndex ].name ===
-								'lightbox-zoom-out'
-						) {
-							css.deleteRule( updatedIndex );
-							deletedItems++;
-						}
-					} );
-					css.insertRule( zoomInRule );
-					css.insertRule( zoomOutRule );
+					const root = document.documentElement;
+					root.style.setProperty(
+						'--lightbox-left-position',
+						leftPosition + 'px'
+					);
+					root.style.setProperty(
+						'--lightbox-top-position',
+						topPosition + 'px'
+					);
+					root.style.setProperty(
+						'--lightbox-scale-width',
+						scaleWidth
+					);
+					root.style.setProperty(
+						'--lightbox-scale-height',
+						scaleHeight
+					);
 				},
 				hideLightbox: ( { context, event } ) => {
 					if ( context.core.image.lightboxEnabled ) {

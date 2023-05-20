@@ -229,6 +229,37 @@
 	}
 }
 
+@keyframes lightbox-zoom-in {
+	0% {
+		left: var(--lightbox-left-position);
+		top: var(--lightbox-top-position);
+		transform: scale(var(--lightbox-scale-width), var(--lightbox-scale-height));
+	}
+	100% {
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%) scale(1, 1);
+	}
+}
+
+@keyframes lightbox-zoom-out {
+	0% {
+		visibility: visible;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%) scale(1, 1);
+	}
+	99% {
+		visibility: visible;
+	}
+	100% {
+		visibility: hidden;
+		left: var(--lightbox-left-position);
+		top: var(--lightbox-top-position);
+		transform: scale(var(--lightbox-scale-width), var(--lightbox-scale-height));
+	}
+}
+
 @keyframes turn-on-visibility {
 	0% {
 		opacity: 0;
