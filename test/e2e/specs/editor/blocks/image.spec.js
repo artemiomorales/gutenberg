@@ -842,12 +842,7 @@ test.describe( 'Image', () => {
 	} );
 } );
 
-// Skipping these tests for now as we plan
-// to update them to use the new lightbox syntax
-// once it's merged -- see the following PRs
-// https://github.com/WordPress/gutenberg/pull/53851
-// https://github.com/WordPress/gutenberg/pull/54071
-test.describe.skip( 'Image - interactivity', () => {
+test.describe.only( 'Image - lightbox', () => {
 	test.beforeAll( async ( { requestUtils } ) => {
 		await requestUtils.deleteAllMedia();
 	} );
@@ -863,6 +858,56 @@ test.describe.skip( 'Image - interactivity', () => {
 
 	test.afterEach( async ( { requestUtils } ) => {
 		await requestUtils.deleteAllMedia();
+	} );
+
+	test.describe.only( 'should respect theme.json settings and block overrides', () => {
+		let uploadedMedia;
+
+		test.beforeAll( async ( { requestUtils } ) => {
+			await requestUtils.deleteAllMedia();
+
+			uploadedMedia = await requestUtils.uploadMedia(
+				path.resolve(
+					process.cwd(),
+					'test/e2e/assets/10x10_e2e_test_image_z9T8jK.png'
+				)
+			);
+		} );
+
+		test( 'Block settings - link DISABLED, lightbox UNDEFINED - should hide UI and disable lightbox when block override is undefined', async ( {
+			admin,
+			editor,
+			page,
+			requestUtils,
+		} ) => {
+			await requestUtils.activatePlugin(
+				'lightbox-allow-editing-false-enabled-false'
+			);
+
+			await admin.createNewPost(
+				'post',
+				'Lightbox Test',
+				`<!-- wp:image {"id":${ uploadedMedia.id },"sizeSlug":"full","linkDestination":"none"} -->
+			<figure class="wp-block-image size-full"><img src="${ uploadedMedia.url }" alt="" class="wp-image-${ uploadedMedia.id }"/></figure>
+			<!-- /wp:image --> `
+			);
+
+			const imageBlock = editor.canvas.locator(
+				'role=document[name="Block: Image"i]'
+			);
+
+			await imageBlock.click();
+			await page.getByLabel( 'Block tools' ).getByLabel( 'Link' ).click();
+
+			await expect(
+				page.getByRole( 'menuitem', {
+					name: 'Expand on click',
+				} )
+			).toBeHidden();
+
+			const postId = await editor.publishPost();
+			await page.goto( `/?p=${ postId }` );
+		} );
 	} );
 
 	test.describe( 'tests using uploaded image', () => {
